@@ -5,12 +5,14 @@
 #
 # extlinks:
 #   attributes: {rel: nofollow, target: _blank}
-#   rel_exclude: ['host1.com', 'host2.net']
+#   exclude: ['host3.com']
 #
-# (attributes are required - at least one of them, rel_exclude is optional)
+# (only attributes is required, the other settings are optional)
 # Relative links will not be processed.
-# Links to hosts listed in rel_exclude will not have the 'rel' attribute set.
-# Links which have the 'rel' attribute already will keep it unchanged, like
+#
+# Links to hosts listed in exclude will skip any attribute tampering.
+#
+# Links which have the attribute already will keep the attribute unchanged, like
 # this one in Markdown:
 # [Link text](http://someurl.com){:rel="dofollow"}
 #
@@ -26,43 +28,27 @@ module Jekyll
   module ExtLinks
     # Access plugin config in _config.yml
     def config
-      @context.registers[:site].config['extlinks']
-    end
-
-    # Checks if str contains any fragment of the fragments array
-    def contains_any(str, fragments)
-      return false unless Regexp.union(fragments) =~ str
-      true
+      @context.registers[:site].config['extlinks'] || {}
     end
 
     def extlinks(content)
-      # Process configured link attributes and whitelisted hosts
-      if config
-        if config['attributes']
-          attributes = Array(config['attributes'])
-        end
-        if config['rel_exclude']
-          rel_exclude = Array(config['rel_exclude'])
-        end
-      end
-      # Stop if no attributes were specified
-      return content unless attributes
+      attributes = Array(config['attributes'])
+      exclusions = Array(config['exclude'])
+      doc        = Nokogiri::HTML.fragment(content)
 
-      doc = Nokogiri::HTML.fragment(content)
-      # Stop if we could't parse with HTML
-      return content unless doc
+      # Stop if we could't parse with HTML or there are no attributes
+      return content unless doc && attributes
 
-      doc.css('a').each do |a|
-        # If this is a local link don't change it
-        next unless a.get_attribute('href') =~ /\Ahttp/i
+      links = doc.css('a')
+
+      links.each do |a|
+        next if skip_link?(a.get_attribute('href'), exclusions)
 
         attributes.each do |attr, value|
-          if attr.downcase == 'rel'
-            # If there's a rel already don't change it
-            next unless !a.get_attribute('rel') || a.get_attribute('rel').empty?
-            # Skip whitelisted hosts for the 'rel' attribute
-            next if rel_exclude && contains_any(a.get_attribute('href'), rel_exclude)
-          end
+          # TODO: Find a way to case insensitively match attributes
+          element_attr = a.get_attribute(attr)
+          next if element_attr && element_attr != ''
+
           a.set_attribute(attr, value)
         end
       end
@@ -70,6 +56,20 @@ module Jekyll
       doc.to_s
     end
 
+    private
+
+    # Checks if the link should be modified
+    def skip_link?(href, exclusions)
+      local_link?(href) || excluded?(href, exclusions)
+    end
+
+    def local_link?(href)
+      !(href =~ /\Ahttp/i)
+    end
+
+    def excluded?(url, exclusions)
+      exclusions && Regexp.union(exclusions) =~ url
+    end
   end
 end
 

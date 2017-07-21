@@ -12,6 +12,6 @@ Gem::Specification.new do |s|
   s.homepage    = "http://ogarkov.com/jekyll/plugins/extlinks/"
   s.license     = "MIT"
 
-  s.add_runtime_dependency "jekyll", "~> 3.0" 
-  s.add_runtime_dependency "nokogiri", "~> 1.6" 
+  s.add_runtime_dependency "jekyll", "~> 3.0"
+  s.add_runtime_dependency "nokogiri", "~> 1.6"
 end
