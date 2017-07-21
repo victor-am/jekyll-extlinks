@@ -24,12 +24,12 @@ Configure the plugin in your `_config.yml`. Notice the indentation matters. Exam
 ```yml
 extlinks:
   attributes: {rel: nofollow, target: _blank}
-  rel_exclude: ['host1.com', 'host2.net']
+  exclude: ['host1.com', 'host2.net']
 ```
 
 * `attributes` are required - at least one of them; `rel_exclude` is optional
-* Links to hosts listed in `rel_exclude` will not have the `rel` attribute set
-* Links which have the `rel` attribute already will keep it unchanged, like this one in Markdown: `[Link text](http://someurl.com){:rel="dofollow"}`
+* Links to hosts listed in `exclude` will not have the any attribute set
+* Links which already have the attribute set will keep it unchanged, like this one in Markdown: `[Link text](http://someurl.com){:rel="dofollow"}`
 * Relative links will not be processed
 * Don't forget to actually use the plugin (see below)
 
